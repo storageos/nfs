@@ -1,0 +1,46 @@
+kind: Pod
+apiVersion: v1
+metadata:
+  name: nfs-pod
+  labels:
+    app: nfs
+spec:
+  hostNetwork: true
+  containers:
+    - name: storageos-nfs
+      image: storageos/nfs:test
+      env:
+        - name: GANESHA_CONFIGFILE
+          value: /export.conf
+        - name: NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+      ports:
+        - containerPort: 2049
+          name: nfs
+        - containerPort: 80
+          name: http
+      volumeMounts:
+        - name: export
+          mountPath: /export
+      securityContext:
+        privileged: true
+        capabilities:
+          add:
+            - SYS_ADMIN
+            - DAC_READ_SEARCH
+      readinessProbe:
+        httpGet:
+          path: /healthz
+          port: http
+        initialDelaySeconds: 1
+        periodSeconds: 3
+  volumes:
+    - name: export
+      hostPath:
+        path: /export

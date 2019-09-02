@@ -13,7 +13,6 @@ import (
 	"github.com/storageos/nfs/health"
 	"github.com/storageos/nfs/http"
 	"github.com/storageos/nfs/metrics"
-	"github.com/storageos/nfs/rpcbind"
 )
 
 const (
@@ -32,36 +31,21 @@ const (
 
 func main() {
 
-	ganeshaConfig := os.Getenv(ganeshaConfigEnvVar)
+	// Rad & validate config.
+	ganeshaConfig := getEnv(ganeshaConfigEnvVar, "")
 	if ganeshaConfig == "" {
 		log.Fatalf("ganesha config file must be specified with %s env var", ganeshaConfigEnvVar)
 	}
-
-	listenAddr := os.Getenv(listenAddrEnvVar)
-	if listenAddr == "" {
-		listenAddr = ":80"
-	}
-
-	dm := os.Getenv(disableMetricsEnvVar)
-	if dm == "" {
-		dm = "false"
-	}
-	disableMetrics, err := strconv.ParseBool(dm)
+	disableMetrics, err := getBoolEnv(disableMetricsEnvVar, false)
 	if err != nil {
 		log.Fatalf("%s env var value must be true or false/empty/unset", disableMetricsEnvVar)
 	}
+	listenAddr := getEnv(listenAddrEnvVar, ":80")
 
 	// All processes should start and be ready within the context timeout.  Can
-	// be extended as needed, but 10 seconds should be plenty.
-	startCtx, startCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	// be extended as needed, but 30 seconds should be plenty.
+	startCtx, startCancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer startCancel()
-
-	// Start rpcbind
-	rpc := rpcbind.New()
-	rpcErrCh, err := rpc.Run()
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	// Start DBus.
 	bus := dbus.New()
@@ -112,8 +96,6 @@ func main() {
 	select {
 	case <-stopCh:
 		log.Print("shutdown requested")
-	case err := <-rpcErrCh:
-		log.Printf("rpcbind daemon stopped: %v", err)
 	case err := <-dbusErrCh:
 		log.Printf("dbus daemon stopped: %v", err)
 	case err := <-nfsErrCh:
@@ -128,7 +110,6 @@ func main() {
 
 	nfs.Close(stopCtx)
 	srv.Close(stopCtx)
-	rpc.Close(stopCtx)
 	bus.Close(stopCtx)
 
 	log.Print("graceful shutdown completed")
@@ -158,4 +139,27 @@ func waitForReady(ctx context.Context, readyFunc func(ctx context.Context) bool)
 			}
 		}
 	}
+}
+
+// getEnv reads an environment variable by key name and returns the value or a
+// default value if not set.
+func getEnv(key string, defaultVal string) string {
+	if value, exists := os.LookupEnv(key); exists {
+		return value
+	}
+	return defaultVal
+}
+
+// getBoolEnv reads an evironment variable by key name and returns its boolean
+// value or the default value if not set.  It will log a fatal error if the
+// value can not be parsed as a boolean since it's expected to be used during
+// bootstrap only.
+func getBoolEnv(key string, defaultVal bool) (bool, error) {
+
+	val := getEnv(key, "")
+	if val == "" {
+		return defaultVal, nil
+	}
+
+	return strconv.ParseBool(val)
 }
