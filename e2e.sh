@@ -8,7 +8,7 @@ cluster=kind-1
 run_kind() {
     if [ ! -x /usr/local/bin/kind ]; then
         echo "Download kind binary..."
-        wget -O kind 'https://github.com/kubernetes-sigs/kind/releases/download/v0.5.1/kind-linux-amd64' --no-check-certificate && chmod +x kind && sudo mv kind /usr/local/bin/
+        wget -O kind 'https://github.com/kubernetes-sigs/kind/releases/download/v0.5.1/kind-linux-amd64' && chmod +x kind && sudo mv kind /usr/local/bin/
     fi
 
     if [ ! -x /usr/local/bin/kubectl ]; then
