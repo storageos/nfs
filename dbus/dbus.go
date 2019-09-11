@@ -100,6 +100,10 @@ func (d *DBus) IsReady(ctx context.Context) bool {
 // completion.
 func (d *DBus) prepare() error {
 
+	if err := os.MkdirAll("/run/dbus", 0755); err != nil {
+		return err
+	}
+
 	// Make sure the node has a machine-id.
 	idgen := &exec.Cmd{
 		Path: dbusUUIDGen,

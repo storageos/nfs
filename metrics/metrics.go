@@ -46,7 +46,7 @@ func New(name string, namespace string) *Metrics {
 	}
 }
 
-// RegisterHandlers registers the http endpoint for serving metrics data.
+// Handler registers the http endpoint for serving metrics data.
 func (s *Metrics) Handler() http.Handler {
 	return promhttp.HandlerFor(s.registry, promhttp.HandlerOpts{})
 }

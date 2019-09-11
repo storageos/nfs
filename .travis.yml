@@ -6,7 +6,7 @@ env:
   global:
     - IMAGE_NAME=storageos/nfs
     - IMAGE_TAG=test
-    - K8S_VERSION="v1.14.2"
+    - K8S_VERSION="v1.15.3"
 
 before_install:
   - |

@@ -21,17 +21,16 @@ For more information, see https://docs.storageos.com.
 make image IMAGE=storageos/nfs:test
 ```
 
-Once the image has been built, the `nfs` binary can be recompiled and the image
-updated quickly by running:
-
-```shell
-make update IMAGE=storageos/nfs:test
-```
+The image uses `storageos/nfs-base` as the base image, which in turn is
+`registry.access.redhat.com/ubi8/ubi:8.0` with a custom-compiled version of
+`nfs-ganesha` to have un-needed dependencies removed.  Since this image must be
+built on a registered RHEL8 server, it is built on internal StorageOS
+infrastructure.
 
 ## Run it on host
 
-Build the init container with `make image` or `make update` and run it on the
-host with `make run`.
+Build the init container with `make image` and run it on the host with `make
+run`.
 
 ## Configuration
 

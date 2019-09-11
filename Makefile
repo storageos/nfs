@@ -13,9 +13,6 @@ build:
 image:
 	docker build --no-cache . -f Dockerfile -t $(IMAGE)
 
-update:
-	docker build --no-cache . -f Dockerfile.update -t $(IMAGE)
-
 unittest:
 	go test -v -race `go list -v ./...`
 
@@ -28,7 +25,7 @@ run:
 		-p 2049 \
 		-p 80 \
 		-v /export:/export \
-		--cap-add=SYS_ADMIN \
+		--cap-add=SYS_ADMIN,DAC_READ_SEARCH \
 		--privileged \
 		-e GANESHA_CONFIGFILE=/export.conf \
 		-e NAME=test \
