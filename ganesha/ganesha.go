@@ -79,6 +79,12 @@ func (g *Ganesha) Close(ctx context.Context) {
 	}
 }
 
+// MonitorStatus listens for status updates and publishes to all status
+// watchers.
+func (g *Ganesha) MonitorStatus(ctx context.Context) error {
+	return g.mgr.MonitorStatus(ctx)
+}
+
 // IsReady returns true if the nfs-ganesha is ready for operation, or false if a
 // heartbeat was not received within the timeout period.
 //
@@ -92,11 +98,13 @@ func (g *Ganesha) IsReady(ctx context.Context) bool {
 	statusCh := make(chan bool)
 	errCh := make(chan error)
 
-	go func() {
-		errCh <- g.mgr.StreamStatus(ctx, statusCh)
-	}()
+	g.mgr.AddStatusWatcher(ctx, statusCh, errCh)
+	defer g.mgr.RemoveStatusWatcher(ctx, statusCh)
 
 	select {
+	case <-ctx.Done():
+		log.Printf("timed out waiting for nfs-ganesha heartbeat")
+		return false
 	case err := <-errCh:
 		log.Printf("finished watching for nfs-ganesha heartbeats: %v", err)
 		return false

@@ -66,6 +66,15 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// Start watching Ganesha status heartbeats.  If it exits, we expect the
+	// healthcheck to timeout and the orchestrator will restart the container.
+	monitorCtx, monitorCancel := context.WithCancel(context.Background())
+	go func() {
+		if err := nfs.MonitorStatus(monitorCtx); err != nil {
+			log.Printf("status monitor finished: %v", err)
+		}
+	}()
+
 	// Wait for Ganesha to report it is ready.
 	if err := waitForReady(startCtx, nfs.IsReady); err != nil {
 		log.Fatal(err)
@@ -103,6 +112,9 @@ func main() {
 	case err := <-httpErrCh:
 		log.Printf("http server stopped: %v", err)
 	}
+
+	// Stop monitoring
+	monitorCancel()
 
 	// Graceful stop
 	stopCtx, stopCancel := context.WithTimeout(context.Background(), 5*time.Second)
