@@ -27,6 +27,14 @@ The image uses `storageos/nfs-base` as the base image, which in turn is
 built on a registered RHEL8 server, it is built on internal StorageOS
 infrastructure.
 
+## Release
+
+The version must be set in the `Dockerfile`.  To set it, run:
+
+```console
+NEW_VERSION=<version> make release
+```
+
 ## Run it on host
 
 Build the init container with `make image` and run it on the host with `make
