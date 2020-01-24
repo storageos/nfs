@@ -32,3 +32,8 @@ run:
 		-e NAMESPACE=default \
 		-e DISABLE_METRICS=false \
 		$(IMAGE)
+
+# Prepare the repo for a new release. Run:
+#   NEW_VERSION=<version> make release
+release:
+	sed -i -e "s/version=.*/version=\"$(NEW_VERSION)\" \\\/g" Dockerfile
